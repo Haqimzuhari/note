@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Web App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Note Web App</h1>
+        <div class="note-form">
+            <input type="text" id="note-title" placeholder="Title">
+            <div id="editor" contenteditable="true"></div>
+            <div class="toolbar">
+                <button onclick="execCmd('bold')"><b>B</b></button>
+                <button onclick="execCmd('italic')"><i>I</i></button>
+                <button onclick="execCmd('underline')"><u>U</u></button>
+                <button onclick="execCmd('insertUnorderedList')">•</button>
+                <button onclick="execCmd('insertOrderedList')">1.</button>
+                <button onclick="execCmd('justifyLeft')">L</button>
+                <button onclick="execCmd('justifyCenter')">C</button>
+                <button onclick="execCmd('justifyRight')">R</button>
+                <button onclick="execCmd('fontSize', '1')">Small</button>
+                <button onclick="execCmd('fontSize', '3')">Normal</button>
+                <button onclick="execCmd('fontSize', '5')">Large</button>
+            </div>
+            <button onclick="addNote()">Add Note</button>
+            <button id="update-note" style="display:none;" onclick="updateNote()">Update Note</button>
+        </div>
+        <div class="notes-list" id="notes-list"></div>
+        <div class="note-detail" id="note-detail" style="display:none;">
+            <button onclick="backToList()">Back to list</button>
+            <h2 id="note-detail-title"></h2>
+            <div id="note-detail-content"></div>
+            <button id="edit-note" onclick="editNote()">Edit</button>
+            <button id="delete-note" onclick="deleteCurrentNote()">Delete</button>
+        </div>
+    </div>
+    <script src="scripts.js"></script>
+</body>
+</html>
