@@ -1,176 +1,188 @@
-document.addEventListener('DOMContentLoaded', loadNotes);
+document.addEventListener("DOMContentLoaded", loadMarkdowns);
+document.getElementById('editor').addEventListener('paste', handlePaste);
+let currentMarkdownId = null;
 
-let editNoteId = null;
-let viewNoteId = null;
-
-function execCmd(command, value = null) {
-    document.execCommand(command, false, value);
+function formatText(command) {
+    document.execCommand(command, false, null);
+    const ul_list = document.querySelectorAll('ul');
+    const ul_array = [...ul_list];
+    ul_array.forEach(ul => {
+        ul.classList.add('list-disc', 'list-inside')
+    });
+    const ol_list = document.querySelectorAll('ol');
+    const ol_array = [...ol_list];
+    ol_array.forEach(ol => {
+        ol.classList.add('list-decimal', 'list-inside')
+    });
 }
 
-document.getElementById('editor').addEventListener('paste', function (e) {
-    const clipboardData = e.clipboardData || window.clipboardData;
-    const items = clipboardData.items;
-    for (let item of items) {
-        if (item.type.indexOf('image') !== -1) {
-            const file = item.getAsFile();
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.style.maxWidth = '100%';
-                document.getElementById('editor').appendChild(img);
-            };
-            reader.readAsDataURL(file);
+function createTable() {
+    const rows = prompt("Enter number of rows:");
+    const cols = prompt("Enter number of columns:");
+    if (rows > 0 && cols > 0) {
+        let table = "<table class='table-auto'>";
+        for (let i = 0; i < rows; i++) {
+            table += "<tr>";
+            for (let j = 0; j < cols; j++) {
+                table += "<td class='border border-neutral-500 p-2'></td>";
+            }
+            table += "</tr>";
         }
+        table += "</table><div></div>";
+        document.execCommand('insertHTML', false, table);
     }
-});
+}
 
-function addNote() {
-    const title = document.getElementById('note-title').value;
-    const content = document.getElementById('editor').innerHTML;
-
-    if (!title || !content) {
-        alert('Please enter both title and content.');
-        return;
+function formatQuote() {
+    const quote = prompt("Enter quote text:");
+    if (quote) {
+        const quoteHTML = `<div class="flex"><blockquote class="bg-neutral-800 rounded px-2 py-1 border-l-8 border-indigo-600 font-quote italic">&ldquo;${quote}&rdquo;</blockquote></div><div></div>`;
+        document.execCommand('insertHTML', false, quoteHTML);
     }
+}
 
-    const note = {
-        id: Date.now(),
-        title: title,
-        content: content
-    };
+function formatCode() {
+    const code = prompt("Enter code:");
+    if (code) {
+        const codeHTML = `<div class="mb-1 bg-neutral-800 text-white rounded px-4 py-2 font-mono">${code}</div><div></div>`;
+        document.execCommand('insertHTML', false, codeHTML);
+    }
+}
 
-    saveNoteToLocalStorage(note);
-    appendNoteToDOM(note);
+function changeFontSize() {
+    const size = prompt("Enter font size (1-7):");
+    document.execCommand('fontSize', false, size);
+}
 
-    document.getElementById('note-title').value = '';
+function highlightText() {
+    const color = prompt("Enter highlight color (e.g., yellow):");
+    document.execCommand('hiliteColor', false, color);
+}
+
+function cancelSaveMarkdown() {
     document.getElementById('editor').innerHTML = '';
+    document.getElementById('editor-title').value = '';
+    window.dispatchEvent(
+        new CustomEvent('modal-editor-close', {detail: {id: 'modal-editor'}})
+    )
 }
 
-function updateNote() {
-    const title = document.getElementById('note-title').value;
+function saveMarkdown() {
+    const title = document.getElementById('editor-title').value;
     const content = document.getElementById('editor').innerHTML;
-
-    if (!title || !content) {
-        alert('Please enter both title and content.');
-        return;
+    if (!title) return alert("Cannot save empty title.");
+    if (!content) return alert("Cannot save empty content.");
+    let markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
+    let titles = JSON.parse(localStorage.getItem('titles')) || [];
+    if (currentMarkdownId !== null) {
+        markdowns[currentMarkdownId] = content;
+        titles[currentMarkdownId] = title;
+    } else {
+        markdowns.push(content);
+        titles.push(title);
     }
-
-    const updatedNote = {
-        id: editNoteId,
-        title: title,
-        content: content
-    };
-
-    updateNoteInLocalStorage(updatedNote);
-    updateNoteInDOM(updatedNote);
-
-    document.getElementById('note-title').value = '';
+    localStorage.setItem('markdowns', JSON.stringify(markdowns));
+    localStorage.setItem('titles', JSON.stringify(titles));
     document.getElementById('editor').innerHTML = '';
-    document.getElementById('update-note').style.display = 'none';
-    document.querySelector('.note-form button[onclick="addNote()"]').style.display = 'inline-block';
-
-    editNoteId = null;
+    document.getElementById('editor-title').value = '';
+    document.getElementById('editor-title').readOnly = false
+    document.getElementById('editor-title').classList.remove('cursor-not-allowed', 'bg-gray-100')
+    currentMarkdownId = null;
+    window.dispatchEvent(
+        new CustomEvent('modal-editor-close', {detail: {id: 'modal-editor'}})
+    )
+    loadMarkdowns();
 }
 
-function saveNoteToLocalStorage(note) {
-    const notes = JSON.parse(localStorage.getItem('notes')) || [];
-    notes.push(note);
-    localStorage.setItem('notes', JSON.stringify(notes));
+function emptyNoteList() {
+    const emptyNoteListContainer = document.getElementById('empty-note-list');
+    emptyNoteListContainer.classList.remove('hidden')
+    emptyNoteListContainer.classList.add('flex')
 }
 
-function loadNotes() {
-    const notes = JSON.parse(localStorage.getItem('notes')) || [];
-    notes.forEach(note => appendNoteToDOM(note));
+function nonEmptyNoteList() {
+    const emptyNoteListContainer = document.getElementById('empty-note-list');
+    emptyNoteListContainer.classList.remove('flex')
+    emptyNoteListContainer.classList.add('hidden')
 }
 
-function appendNoteToDOM(note) {
-    const noteElement = document.createElement('div');
-    noteElement.className = 'note';
-    noteElement.setAttribute('data-id', note.id);
-
-    const noteTitle = document.createElement('div');
-    noteTitle.className = 'note-title';
-    noteTitle.innerText = note.title;
-    noteTitle.onclick = function () {
-        viewNoteDetail(note.id);
-    };
-
-    const viewButton = document.createElement('button');
-    viewButton.innerText = 'View';
-    viewButton.onclick = function () {
-        viewNoteDetail(note.id);
-    };
-
-    noteElement.appendChild(noteTitle);
-    noteElement.appendChild(viewButton);
-
-    document.getElementById('notes-list').appendChild(noteElement);
-}
-
-function updateNoteInLocalStorage(updatedNote) {
-    const notes = JSON.parse(localStorage.getItem('notes')) || [];
-    const index = notes.findIndex(note => note.id === updatedNote.id);
-    if (index !== -1) {
-        notes[index] = updatedNote;
-        localStorage.setItem('notes', JSON.stringify(notes));
+function loadMarkdowns() {
+    const titles = JSON.parse(localStorage.getItem('titles')) || [];
+    const markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
+    const noteList = document.getElementById('note-list');
+    emptyNoteList()
+    noteList.innerHTML = '';
+    
+    if (markdowns.length > 0) {
+        nonEmptyNoteList()
+        markdowns.forEach((markdown, index) => {
+            const noteButton = document.createElement('button')
+            noteButton.type = 'button'
+            noteButton.className = 'w-full hover:bg-neutral-800 rounded px-2 py-1 font-semibold text-sm text-left transition'
+            noteButton.innerHTML = titles[index]
+            noteButton.onclick = () => viewMarkdown(index)
+            noteList.appendChild(noteButton);
+        });
     }
 }
 
-function updateNoteInDOM(updatedNote) {
-    const noteElement = document.querySelector(`.note[data-id='${updatedNote.id}']`);
-    if (noteElement) {
-        noteElement.querySelector('.note-title').innerText = updatedNote.title;
+function viewMarkdown(index) {
+    const markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
+    
+    if (markdowns.length > 0) {
+        currentMarkdownId = index;
+        document.getElementById('markdown-content').innerHTML = markdowns[index];
+        document.getElementById('editor').innerHTML = '';
+        document.getElementById('editor-title').value = '';
+        document.getElementById('editor-title').readOnly = false
+        document.getElementById('editor-title').classList.remove('cursor-not-allowed', 'bg-gray-100')
+        document.getElementById('markdown-viewer').classList.remove('hidden');
     }
 }
 
-function deleteNoteFromDOM(noteId) {
-    const noteElement = document.querySelector(`.note[data-id='${noteId}']`);
-    if (noteElement) {
-        noteElement.remove();
+function editMarkdown() {
+    const markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
+    const titles = JSON.parse(localStorage.getItem('titles')) || [];
+    document.getElementById('editor').innerHTML = markdowns[currentMarkdownId];
+    document.getElementById('editor-title').value = titles[currentMarkdownId];
+    document.getElementById('editor-title').readOnly = true
+    document.getElementById('editor-title').classList.add('cursor-not-allowed', 'bg-gray-100')
+    document.getElementById('markdown-viewer').classList.add('hidden');
+    window.dispatchEvent(
+        new CustomEvent('modal-editor-open', {detail: {id: 'modal-editor'}})
+    )
+}
+
+function deleteMarkdown() {
+    let markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
+    let titles = JSON.parse(localStorage.getItem('titles')) || [];
+    markdowns.splice(currentMarkdownId, 1);
+    titles.splice(currentMarkdownId, 1);
+    localStorage.setItem('markdowns', JSON.stringify(markdowns));
+    localStorage.setItem('titles', JSON.stringify(titles));
+    document.getElementById('markdown-content').innerHTML = '';
+    document.getElementById('editor-title').value = '';
+    document.getElementById('markdown-viewer').classList.add('hidden');
+    currentMarkdownId = null;
+    loadMarkdowns();
+}
+
+function insertLink() {
+    const url = prompt("Enter the URL:");
+    const text = prompt("Enter the text for the link:");
+    if (url && text) {
+        const linkHTML = `<a href="${url}" target="_blank" class="text-blue-400 hover:text-blue-500 transition underline">${text}</a>`;
+        document.execCommand('insertHTML', false, linkHTML);
     }
 }
 
-function deleteNoteFromLocalStorage(noteId) {
-    const notes = JSON.parse(localStorage.getItem('notes')) || [];
-    const updatedNotes = notes.filter(note => note.id !== noteId);
-    localStorage.setItem('notes', JSON.stringify(updatedNotes));
-}
-
-function viewNoteDetail(noteId) {
-    const notes = JSON.parse(localStorage.getItem('notes')) || [];
-    const note = notes.find(note => note.id === noteId);
-    if (note) {
-        document.getElementById('note-detail-title').innerText = note.title;
-        document.getElementById('note-detail-content').innerHTML = note.content;
-        document.getElementById('note-detail').style.display = 'block';
-        document.getElementById('notes-list').style.display = 'none';
-        viewNoteId = noteId;
-    }
-}
-
-function backToList() {
-    document.getElementById('note-detail').style.display = 'none';
-    document.getElementById('notes-list').style.display = 'block';
-}
-
-function editNote() {
-    const notes = JSON.parse(localStorage.getItem('notes')) || [];
-    const note = notes.find(note => note.id === viewNoteId);
-    if (note) {
-        document.getElementById('note-title').value = note.title;
-        document.getElementById('editor').innerHTML = note.content;
-        document.getElementById('update-note').style.display = 'inline-block';
-        document.querySelector('.note-form button[onclick="addNote()"]').style.display = 'none';
-        backToList();
-        editNoteId = note.id;
-    }
-}
-
-function deleteCurrentNote() {
-    if (viewNoteId) {
-        deleteNoteFromDOM(viewNoteId);
-        deleteNoteFromLocalStorage(viewNoteId);
-        backToList();
-    }
+function handlePaste(e) {
+    setTimeout(function() {
+        const editor = e.target
+        const imgs = editor.querySelectorAll('img')
+        const img_array = [...imgs]
+        img_array.forEach(img => {
+            img.classList.add('object-cover', 'rounded-lg', 'border', 'border-neutral-900')
+        })
+    }, 300);
 }

@@ -3,38 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note Web App</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Markdown</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@100..900&family=Playwrite+NG+Modern:wght@100..400&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+          theme: {
+            fontFamily: {
+                'sans': ['Bricolage Grotesque', 'sans-serif'],
+                'mono': ['Source Code Pro', 'monospace'],
+                'quote': ['Playwrite NG Modern'],
+            }
+          }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>Note Web App</h1>
-        <div class="note-form">
-            <input type="text" id="note-title" placeholder="Title">
-            <div id="editor" contenteditable="true"></div>
-            <div class="toolbar">
-                <button onclick="execCmd('bold')"><b>B</b></button>
-                <button onclick="execCmd('italic')"><i>I</i></button>
-                <button onclick="execCmd('underline')"><u>U</u></button>
-                <button onclick="execCmd('insertUnorderedList')">•</button>
-                <button onclick="execCmd('insertOrderedList')">1.</button>
-                <button onclick="execCmd('justifyLeft')">L</button>
-                <button onclick="execCmd('justifyCenter')">C</button>
-                <button onclick="execCmd('justifyRight')">R</button>
-                <button onclick="execCmd('fontSize', '1')">Small</button>
-                <button onclick="execCmd('fontSize', '3')">Normal</button>
-                <button onclick="execCmd('fontSize', '5')">Large</button>
+<body class="bg-neutral-900 text-neutral-200">
+    <div id="app" class="w-full max-w-screen-lg mx-auto p-4 flex">
+        <div class="w-60 flex-none border-r border-neutral-800 pr-4 space-y-2">
+            <div class="flex space-x-4 items-center justify-between pl-2 border-b border-neutral-800 pb-2">
+                <p class="text-xl font-semibold">Note</p>
+                <button type="button" class="rounded bg-sky-500 px-4 py-1 text-center text-xs font-semibold hover:bg-sky-600 text-white transition" x-data="{id:'modal-editor'}" x-on:click="$dispatch('modal-editor-open',{id})">New</button>
             </div>
-            <button onclick="addNote()">Add Note</button>
-            <button id="update-note" style="display:none;" onclick="updateNote()">Update Note</button>
+            <div id="note-list" class="flex flex-col space-y-2"></div>
         </div>
-        <div class="notes-list" id="notes-list"></div>
-        <div class="note-detail" id="note-detail" style="display:none;">
-            <button onclick="backToList()">Back to list</button>
-            <h2 id="note-detail-title"></h2>
-            <div id="note-detail-content"></div>
-            <button id="edit-note" onclick="editNote()">Edit</button>
-            <button id="delete-note" onclick="deleteCurrentNote()">Delete</button>
+        <div class="w-full pl-4">
+            <div id="empty-note-list" class="w-full h-40 items-center justify-center space-x-2 rounded bg-neutral-800">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                </svg>
+                <p>Note is empty. Start create one</p>
+            </div>
+            <div id="markdown-viewer" class="hidden">
+                <div id="markdown-content"></div>
+                <button onclick="editMarkdown()">Edit</button>
+                <button onclick="deleteMarkdown()">Delete</button>
+            </div>
+        </div>
+    </div>
+    <div x-cloak class="fixed inset-0 bg-neutral-900/60 p-8 backdrop-blur-sm overflow-y-auto" x-data="{modal:false}" x-show="modal" x-on:modal-editor-open.window="if ($event.detail.id == 'modal-editor') modal=true" x-on:modal-editor-close.window="if ($event.detail.id == 'modal-editor') modal=false">
+        <div x-cloak class="rounded-2xl bg-neutral-800 p-8 w-full max-w-screen-md mx-auto space-y-4" x-show="modal">
+            <div id="editor-container" class="space-y-4">
+                <p class="font-semibold">Note Editor</p>
+                <div class="space-y-2">
+                    <input type="text" id="editor-title" placeholder="Title" class="w-full rounded-lg px-4 py-2 text-sm bg-neutral-700 text-neutral-200">
+                    <div class="flex flex-col space-y-2">
+                        <div id="editor" contenteditable="true" class="w-full rounded-lg p-4 min-h-60 bg-neutral-700 text-neutral-200 text-sm"></div>
+                        <div id="toolbar" class="flex space-x-1 flex-wrap">
+                            <button onclick="formatText('bold')" class="text-sm bg-neutral-700 rounded w-6 h-6 flex items-center justify-center font-bold">B</button>
+                            <button onclick="formatText('italic')" class="text-sm bg-neutral-700 rounded w-6 h-6 flex items-center justify-center italic">I</button>
+                            <button onclick="formatText('underline')" class="text-sm bg-neutral-700 rounded w-6 h-6 flex items-center justify-center underline">U</button>
+                            <button onclick="changeFontSize()" class="text-sm bg-neutral-700 rounded w-6 h-6 flex items-center justify-center font-bold">T<span class="font-light">t</span></button>
+                            <button onclick="formatCode()" class="text-sm bg-neutral-700 rounded w-8 h-6 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
+                                </svg>
+                            </button>
+                            <button onclick="createTable()" class="text-sm bg-neutral-700 rounded w-14 h-6 flex items-center justify-center">Table</button>
+                            <button onclick="formatQuote()" class="text-sm bg-neutral-700 rounded w-14 h-6 flex items-center justify-center">Quote</button>
+                            <button onclick="highlightText()" class="text-sm bg-neutral-700 rounded w-14 h-6 flex items-center justify-center">HLight</button>
+                            <button onclick="formatText('insertOrderedList')" class="text-sm bg-neutral-700 rounded w-8 h-6 flex items-center justify-center">OL</button>
+                            <button onclick="formatText('insertUnorderedList')" class="text-sm bg-neutral-700 rounded w-8 h-6 flex items-center justify-center">UL</button>
+                            <button onclick="insertLink()" class="text-sm bg-neutral-700 rounded w-14 h-6 flex items-center justify-center">Link</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          
+            <div class="flex space-x-2 justify-end">
+                <button x-on:click="cancelSaveMarkdown()" type="button" class="rounded bg-gray-100 px-4 py-1 text-center text-sm font-semibold text-gray-500 hover:bg-gray-200 transition">
+                    Cancel
+                </button>
+                <button x-on:click="saveMarkdown()" type="button" class="rounded bg-sky-500 px-4 py-1 text-center text-sm font-semibold text-white hover:bg-sky-600 transition">
+                    Save
+                </button>
+            </div>
         </div>
     </div>
     <script src="scripts.js"></script>
