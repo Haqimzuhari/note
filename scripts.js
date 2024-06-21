@@ -1,16 +1,16 @@
 document.addEventListener("DOMContentLoaded", loadMarkdowns);
-
+document.getElementById('editor').addEventListener('paste', handlePaste);
 let currentMarkdownId = null;
 
 function formatText(command) {
     document.execCommand(command, false, null);
-    var ul_list = document.querySelectorAll('ul');
-    var ul_array = [...ul_list];
+    const ul_list = document.querySelectorAll('ul');
+    const ul_array = [...ul_list];
     ul_array.forEach(ul => {
         ul.classList.add('list-disc', 'list-inside')
     });
-    var ol_list = document.querySelectorAll('ol');
-    var ol_array = [...ol_list];
+    const ol_list = document.querySelectorAll('ol');
+    const ol_array = [...ol_list];
     ol_array.forEach(ol => {
         ol.classList.add('list-decimal', 'list-inside')
     });
@@ -24,11 +24,11 @@ function createTable() {
         for (let i = 0; i < rows; i++) {
             table += "<tr>";
             for (let j = 0; j < cols; j++) {
-                table += "<td class='border border-zinc-300 p-2'></td>";
+                table += "<td class='border border-neutral-500 p-2'></td>";
             }
             table += "</tr>";
         }
-        table += "</table>";
+        table += "</table><div></div>";
         document.execCommand('insertHTML', false, table);
     }
 }
@@ -36,7 +36,7 @@ function createTable() {
 function formatQuote() {
     const quote = prompt("Enter quote text:");
     if (quote) {
-        const quoteHTML = `<div class="flex"><blockquote class="bg-sky-100 rounded px-4 py-2 my-2 border-l-8 border-sky-500 font-quote italic">&ldquo;${quote}&rdquo;</blockquote></div>`;
+        const quoteHTML = `<div class="flex"><blockquote class="bg-neutral-800 rounded px-2 py-1 border-l-8 border-indigo-600 font-quote italic">&ldquo;${quote}&rdquo;</blockquote></div><div></div>`;
         document.execCommand('insertHTML', false, quoteHTML);
     }
 }
@@ -44,8 +44,7 @@ function formatQuote() {
 function formatCode() {
     const code = prompt("Enter code:");
     if (code) {
-        // const codeHTML = `<pre class="my-2"><code class="bg-slate-100 rounded px-4 py-2">${code}</code></pre>`;
-        const codeHTML = `<div class="mb-1 bg-slate-800 text-white rounded px-4 py-2 font-mono">${code}</div>`;
+        const codeHTML = `<div class="mb-1 bg-neutral-800 text-white rounded px-4 py-2 font-mono">${code}</div><div></div>`;
         document.execCommand('insertHTML', false, codeHTML);
     }
 }
@@ -58,6 +57,14 @@ function changeFontSize() {
 function highlightText() {
     const color = prompt("Enter highlight color (e.g., yellow):");
     document.execCommand('hiliteColor', false, color);
+}
+
+function cancelSaveMarkdown() {
+    document.getElementById('editor').innerHTML = '';
+    document.getElementById('editor-title').value = '';
+    window.dispatchEvent(
+        new CustomEvent('modal-editor-close', {detail: {id: 'modal-editor'}})
+    )
 }
 
 function saveMarkdown() {
@@ -81,21 +88,40 @@ function saveMarkdown() {
     document.getElementById('editor-title').readOnly = false
     document.getElementById('editor-title').classList.remove('cursor-not-allowed', 'bg-gray-100')
     currentMarkdownId = null;
+    window.dispatchEvent(
+        new CustomEvent('modal-editor-close', {detail: {id: 'modal-editor'}})
+    )
     loadMarkdowns();
+}
+
+function emptyNoteList() {
+    const emptyNoteListContainer = document.getElementById('empty-note-list');
+    emptyNoteListContainer.classList.remove('hidden')
+    emptyNoteListContainer.classList.add('flex')
+}
+
+function nonEmptyNoteList() {
+    const emptyNoteListContainer = document.getElementById('empty-note-list');
+    emptyNoteListContainer.classList.remove('flex')
+    emptyNoteListContainer.classList.add('hidden')
 }
 
 function loadMarkdowns() {
     const titles = JSON.parse(localStorage.getItem('titles')) || [];
     const markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
-    const markdownList = document.getElementById('markdowns');
-    markdownList.innerHTML = '';
+    const noteList = document.getElementById('note-list');
+    emptyNoteList()
+    noteList.innerHTML = '';
     
     if (markdowns.length > 0) {
+        nonEmptyNoteList()
         markdowns.forEach((markdown, index) => {
-            const li = document.createElement('li');
-            li.textContent = titles[index];
-            li.onclick = () => viewMarkdown(index);
-            markdownList.appendChild(li);
+            const noteButton = document.createElement('button')
+            noteButton.type = 'button'
+            noteButton.className = 'w-full hover:bg-neutral-800 rounded px-2 py-1 font-semibold text-sm text-left transition'
+            noteButton.innerHTML = titles[index]
+            noteButton.onclick = () => viewMarkdown(index)
+            noteList.appendChild(noteButton);
         });
     }
 }
@@ -106,6 +132,10 @@ function viewMarkdown(index) {
     if (markdowns.length > 0) {
         currentMarkdownId = index;
         document.getElementById('markdown-content').innerHTML = markdowns[index];
+        document.getElementById('editor').innerHTML = '';
+        document.getElementById('editor-title').value = '';
+        document.getElementById('editor-title').readOnly = false
+        document.getElementById('editor-title').classList.remove('cursor-not-allowed', 'bg-gray-100')
         document.getElementById('markdown-viewer').classList.remove('hidden');
     }
 }
@@ -118,6 +148,9 @@ function editMarkdown() {
     document.getElementById('editor-title').readOnly = true
     document.getElementById('editor-title').classList.add('cursor-not-allowed', 'bg-gray-100')
     document.getElementById('markdown-viewer').classList.add('hidden');
+    window.dispatchEvent(
+        new CustomEvent('modal-editor-open', {detail: {id: 'modal-editor'}})
+    )
 }
 
 function deleteMarkdown() {
@@ -141,4 +174,15 @@ function insertLink() {
         const linkHTML = `<a href="${url}" target="_blank" class="text-blue-400 hover:text-blue-500 transition underline">${text}</a>`;
         document.execCommand('insertHTML', false, linkHTML);
     }
+}
+
+function handlePaste(e) {
+    setTimeout(function() {
+        const editor = e.target
+        const imgs = editor.querySelectorAll('img')
+        const img_array = [...imgs]
+        img_array.forEach(img => {
+            img.classList.add('object-cover', 'rounded-lg', 'border', 'border-neutral-900')
+        })
+    }, 300);
 }
