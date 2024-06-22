@@ -1,188 +1,147 @@
-document.addEventListener("DOMContentLoaded", loadMarkdowns);
-document.getElementById('editor').addEventListener('paste', handlePaste);
-let currentMarkdownId = null;
+document.addEventListener("DOMContentLoaded", loadNoteList);
 
-function formatText(command) {
-    document.execCommand(command, false, null);
-    const ul_list = document.querySelectorAll('ul');
-    const ul_array = [...ul_list];
-    ul_array.forEach(ul => {
-        ul.classList.add('list-disc', 'list-inside')
-    });
-    const ol_list = document.querySelectorAll('ol');
-    const ol_array = [...ol_list];
-    ol_array.forEach(ol => {
-        ol.classList.add('list-decimal', 'list-inside')
-    });
-}
-
-function createTable() {
-    const rows = prompt("Enter number of rows:");
-    const cols = prompt("Enter number of columns:");
-    if (rows > 0 && cols > 0) {
-        let table = "<table class='table-auto'>";
-        for (let i = 0; i < rows; i++) {
-            table += "<tr>";
-            for (let j = 0; j < cols; j++) {
-                table += "<td class='border border-neutral-500 p-2'></td>";
-            }
-            table += "</tr>";
+let currentNoteId = null;
+const editor = new EditorJS({
+    placeholder: 'Your content',
+    holder: 'editorjs',
+    tools: {
+        header: {
+            class: Header,
+            inlineToolbar: ['link', 'marker', 'bold', 'italic'],
+        },
+        image: SimpleImage,
+        list: {
+            class: NestedList,
+            inlineToolbar: true,
+            config: {
+              defaultStyle: 'unordered'
+            },
+        },
+        quote: Quote,
+        code: CodeTool,
+        Marker: {
+            class: Marker
+        },
+        table: {
+            class: Table,
+            inlineToolbar: true,
+            config: {rows: 2, cols: 2,}
         }
-        table += "</table><div></div>";
-        document.execCommand('insertHTML', false, table);
-    }
-}
+    },
+    autofocus: false
+});
 
-function formatQuote() {
-    const quote = prompt("Enter quote text:");
-    if (quote) {
-        const quoteHTML = `<div class="flex"><blockquote class="bg-neutral-800 rounded px-2 py-1 border-l-8 border-indigo-600 font-quote italic">&ldquo;${quote}&rdquo;</blockquote></div><div></div>`;
-        document.execCommand('insertHTML', false, quoteHTML);
-    }
-}
+function loadNoteList() {
+    const stored_noteTitle = JSON.parse(localStorage.getItem('stored_noteTitle')) || [];
+    const stored_noteDate = JSON.parse(localStorage.getItem('stored_noteDate')) || [];
 
-function formatCode() {
-    const code = prompt("Enter code:");
-    if (code) {
-        const codeHTML = `<div class="mb-1 bg-neutral-800 text-white rounded px-4 py-2 font-mono">${code}</div><div></div>`;
-        document.execCommand('insertHTML', false, codeHTML);
-    }
-}
-
-function changeFontSize() {
-    const size = prompt("Enter font size (1-7):");
-    document.execCommand('fontSize', false, size);
-}
-
-function highlightText() {
-    const color = prompt("Enter highlight color (e.g., yellow):");
-    document.execCommand('hiliteColor', false, color);
-}
-
-function cancelSaveMarkdown() {
-    document.getElementById('editor').innerHTML = '';
-    document.getElementById('editor-title').value = '';
-    window.dispatchEvent(
-        new CustomEvent('modal-editor-close', {detail: {id: 'modal-editor'}})
-    )
-}
-
-function saveMarkdown() {
-    const title = document.getElementById('editor-title').value;
-    const content = document.getElementById('editor').innerHTML;
-    if (!title) return alert("Cannot save empty title.");
-    if (!content) return alert("Cannot save empty content.");
-    let markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
-    let titles = JSON.parse(localStorage.getItem('titles')) || [];
-    if (currentMarkdownId !== null) {
-        markdowns[currentMarkdownId] = content;
-        titles[currentMarkdownId] = title;
-    } else {
-        markdowns.push(content);
-        titles.push(title);
-    }
-    localStorage.setItem('markdowns', JSON.stringify(markdowns));
-    localStorage.setItem('titles', JSON.stringify(titles));
-    document.getElementById('editor').innerHTML = '';
-    document.getElementById('editor-title').value = '';
-    document.getElementById('editor-title').readOnly = false
-    document.getElementById('editor-title').classList.remove('cursor-not-allowed', 'bg-gray-100')
-    currentMarkdownId = null;
-    window.dispatchEvent(
-        new CustomEvent('modal-editor-close', {detail: {id: 'modal-editor'}})
-    )
-    loadMarkdowns();
-}
-
-function emptyNoteList() {
-    const emptyNoteListContainer = document.getElementById('empty-note-list');
-    emptyNoteListContainer.classList.remove('hidden')
-    emptyNoteListContainer.classList.add('flex')
-}
-
-function nonEmptyNoteList() {
-    const emptyNoteListContainer = document.getElementById('empty-note-list');
-    emptyNoteListContainer.classList.remove('flex')
-    emptyNoteListContainer.classList.add('hidden')
-}
-
-function loadMarkdowns() {
-    const titles = JSON.parse(localStorage.getItem('titles')) || [];
-    const markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
-    const noteList = document.getElementById('note-list');
-    emptyNoteList()
+    const noteList = document.getElementById('note-list-block');
     noteList.innerHTML = '';
-    
-    if (markdowns.length > 0) {
-        nonEmptyNoteList()
-        markdowns.forEach((markdown, index) => {
-            const noteButton = document.createElement('button')
-            noteButton.type = 'button'
-            noteButton.className = 'w-full hover:bg-neutral-800 rounded px-2 py-1 font-semibold text-sm text-left transition'
-            noteButton.innerHTML = titles[index]
-            noteButton.onclick = () => viewMarkdown(index)
-            noteList.appendChild(noteButton);
+    if (stored_noteTitle.length > 0) {
+        stored_noteTitle.forEach((noteTitle, index) => {
+            var noteDate = stored_noteDate[index]
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'w-full text-neutral-200 text-left px-4 py-2 rounded bg-transparent hover:bg-neutral-900 transition'
+            button.innerHTML = noteTitle
+            button.innerHTML = `<p class="truncate font-semibold">${noteTitle}</p><p class="text-xs font-light">${noteDate}</p>`
+            button.onclick = () => loadNoteContent(index)
+            noteList.appendChild(button);
         });
     }
 }
 
-function viewMarkdown(index) {
-    const markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
-    
-    if (markdowns.length > 0) {
-        currentMarkdownId = index;
-        document.getElementById('markdown-content').innerHTML = markdowns[index];
-        document.getElementById('editor').innerHTML = '';
-        document.getElementById('editor-title').value = '';
-        document.getElementById('editor-title').readOnly = false
-        document.getElementById('editor-title').classList.remove('cursor-not-allowed', 'bg-gray-100')
-        document.getElementById('markdown-viewer').classList.remove('hidden');
+function loadNoteContent(index) {
+    const stored_noteTitle = JSON.parse(localStorage.getItem('stored_noteTitle')) || [];
+    const stored_noteContent = JSON.parse(localStorage.getItem('stored_noteContent')) || [];
+
+    if (stored_noteTitle.length > 0 && stored_noteContent.length > 0 && typeof stored_noteTitle[index] !== 'undefined' && typeof stored_noteContent[index] !== 'undefined') {
+        currentNoteId = index;
+        const title = stored_noteTitle[index]
+        const content = stored_noteContent[index]
+        const noteTitle = document.getElementById('note-title')
+        noteTitle.value = title
+        editor.render(content);
+    } else {
+        alert('No note found')
     }
 }
 
-function editMarkdown() {
-    const markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
-    const titles = JSON.parse(localStorage.getItem('titles')) || [];
-    document.getElementById('editor').innerHTML = markdowns[currentMarkdownId];
-    document.getElementById('editor-title').value = titles[currentMarkdownId];
-    document.getElementById('editor-title').readOnly = true
-    document.getElementById('editor-title').classList.add('cursor-not-allowed', 'bg-gray-100')
-    document.getElementById('markdown-viewer').classList.add('hidden');
-    window.dispatchEvent(
-        new CustomEvent('modal-editor-open', {detail: {id: 'modal-editor'}})
-    )
+function saveNote() {
+    const noteTitle = document.getElementById('note-title').value
+    editor.save().then((content) => {
+        content.blocks = content.blocks.map(block => {
+            if (block.data.text) {block.data.text = block.data.text.trim();}
+            if (block.type === 'header' && block.data.text) {block.data.text = block.data.text.trim();}
+            if (block.type === 'list' && block.data.items) {block.data.items = block.data.items.map(item => item.trim());}
+            if (block.type === 'quote' && block.data.text) {block.data.text = block.data.text.trim();}
+            if (block.type === 'code' && block.data.code) {block.data.code = block.data.code.trim();}
+            return block;
+        });
+        const noteDate = getCurrentDateFormatted()
+        if (content.blocks.length > 0 && noteTitle != '') {
+            let stored_noteTitle = JSON.parse(localStorage.getItem('stored_noteTitle')) || [];
+            let stored_noteDate = JSON.parse(localStorage.getItem('stored_noteDate')) || [];
+            let stored_noteContent = JSON.parse(localStorage.getItem('stored_noteContent')) || [];
+
+            if (currentNoteId !== null) {
+                stored_noteTitle[currentNoteId] = noteTitle;
+                stored_noteDate[currentNoteId] = noteDate;
+                stored_noteContent[currentNoteId] = content;
+            } else {
+                var newNoteIndex = stored_noteTitle.push(noteTitle) - 1;
+                currentNoteId = newNoteIndex;
+                stored_noteDate.push(noteDate);
+                stored_noteContent.push(content);
+            }
+
+            localStorage.setItem('stored_noteTitle', JSON.stringify(stored_noteTitle));
+            localStorage.setItem('stored_noteDate', JSON.stringify(stored_noteDate));
+            localStorage.setItem('stored_noteContent', JSON.stringify(stored_noteContent));
+            loadNoteList();
+        } else {
+            alert('Note title and content must not be empty')
+        }
+    }).catch((error) => {
+        console.log(error)
+    });
 }
 
-function deleteMarkdown() {
-    let markdowns = JSON.parse(localStorage.getItem('markdowns')) || [];
-    let titles = JSON.parse(localStorage.getItem('titles')) || [];
-    markdowns.splice(currentMarkdownId, 1);
-    titles.splice(currentMarkdownId, 1);
-    localStorage.setItem('markdowns', JSON.stringify(markdowns));
-    localStorage.setItem('titles', JSON.stringify(titles));
-    document.getElementById('markdown-content').innerHTML = '';
-    document.getElementById('editor-title').value = '';
-    document.getElementById('markdown-viewer').classList.add('hidden');
-    currentMarkdownId = null;
-    loadMarkdowns();
+function resetNote() {
+    const noteTitle = document.getElementById('note-title');
+    noteTitle.value = '';
+    editor.clear();
 }
 
-function insertLink() {
-    const url = prompt("Enter the URL:");
-    const text = prompt("Enter the text for the link:");
-    if (url && text) {
-        const linkHTML = `<a href="${url}" target="_blank" class="text-blue-400 hover:text-blue-500 transition underline">${text}</a>`;
-        document.execCommand('insertHTML', false, linkHTML);
+function deleteNote() {
+    if (currentNoteId !== null) {
+        let stored_noteTitle = JSON.parse(localStorage.getItem('stored_noteTitle')) || [];
+        let stored_noteDate = JSON.parse(localStorage.getItem('stored_noteDate')) || [];
+        let stored_noteContent = JSON.parse(localStorage.getItem('stored_noteContent')) || [];
+        
+        stored_noteTitle.splice(currentNoteId, 1);
+        stored_noteDate.splice(currentNoteId, 1);
+        stored_noteContent.splice(currentNoteId, 1);
+
+        localStorage.setItem('stored_noteTitle', JSON.stringify(stored_noteTitle));
+        localStorage.setItem('stored_noteDate', JSON.stringify(stored_noteDate));
+        localStorage.setItem('stored_noteContent', JSON.stringify(stored_noteContent));
+
+        currentNoteId = null;
+        resetNote()
+        loadNoteList();
     }
 }
 
-function handlePaste(e) {
-    setTimeout(function() {
-        const editor = e.target
-        const imgs = editor.querySelectorAll('img')
-        const img_array = [...imgs]
-        img_array.forEach(img => {
-            img.classList.add('object-cover', 'rounded-lg', 'border', 'border-neutral-900')
-        })
-    }, 300);
+function getCurrentDateFormatted() {
+    const date = new Date();
+    const day = String(date.getDate()).padStart(2, '0');
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const year = date.getFullYear();
+    const month = monthNames[date.getMonth()];
+    const formattedDate = `${day} ${month} ${year}`;
+    return formattedDate;
 }
