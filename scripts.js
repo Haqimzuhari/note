@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", loadNoteList);
 
 let currentNoteId = null;
 const editor = new EditorJS({
-    placeholder: 'Your content',
+    placeholder: 'Your note',
     holder: 'editorjs',
     tools: {
         header: {
@@ -17,7 +17,15 @@ const editor = new EditorJS({
               defaultStyle: 'unordered'
             },
         },
-        quote: Quote,
+        quote: {
+            class: Quote,
+            inlineToolbar: true,
+            shortcut: 'CMD+SHIFT+O',
+            config: {
+                quotePlaceholder: 'Enter a quote',
+                captionPlaceholder: 'Quote\'s author',
+            },
+        },
         code: CodeTool,
         Marker: {
             class: Marker
@@ -26,6 +34,10 @@ const editor = new EditorJS({
             class: Table,
             inlineToolbar: true,
             config: {rows: 2, cols: 2,}
+        },
+        checklist: {
+            class: Checklist,
+            inlineToolbar: true,
         }
     },
     autofocus: false
@@ -42,7 +54,7 @@ function loadNoteList() {
             var noteDate = stored_noteDate[index]
             const button = document.createElement('button')
             button.type = 'button'
-            button.className = 'w-full text-neutral-200 text-left px-4 py-2 rounded bg-transparent hover:bg-neutral-900 transition'
+            button.className = 'w-full text-neutral-200 text-left px-4 py-2 rounded-lg bg-transparent hover:bg-neutral-800 transition'
             button.innerHTML = noteTitle
             button.innerHTML = `<p class="truncate font-semibold">${noteTitle}</p><p class="text-xs font-light">${noteDate}</p>`
             button.onclick = () => loadNoteContent(index)
