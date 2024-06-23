@@ -28,11 +28,11 @@
     <!-- App -->
     <main id="app" class="w-full max-w-screen-lg mx-auto min-h-screen flex">
         <!-- Sidebar -->
-        <div id="note-sidebar" class="md:flex-none hidden md:flex md:flex-col md:w-56 lg:w-72 bg-neutral-800 py-2">
+        <div id="note-sidebar" class="md:flex-none hidden md:flex md:flex-col md:w-56 lg:w-72 bg-neutral-900 py-8 border-r-2 border-neutral-800">
             <!-- Sidebar Header -->
-            <div id="note-sidebar-header" class="w-full flex justify-between items-center px-6 pb-2 border-b border-neutral-900"> 
-                <p class="font-black text-xl text-neutral-200">Note</p>
-                <button type="button" id="new-note" onclick="resetNote()" class="bg-transparent text-neutral-200 w-6 h-6 rounded-full hover:text-sky-600 transition">
+            <div id="note-sidebar-header" class="w-full flex justify-between items-center px-6 pb-2"> 
+                <a href="./" class="font-black text-xl text-neutral-500 hover:text-neutral-50 transition">Note</a>
+                <button type="button" id="new-note" onclick="resetNote()" class="bg-transparent text-neutral-500 w-6 h-6 rounded-full hover:text-neutral-50 transition" title="New note">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 stroke-2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
@@ -40,10 +40,10 @@
             </div>
 
             <!-- List Block -->
-            <div id="note-list-block" class="pt-2 px-2"></div>
+            <div id="note-list-block" class="pt-2 px-2 flex flex-col-reverse"></div>
         </div>
         <!-- Editor Block -->
-        <div id="editor-block" class="w-full p-2">
+        <div id="editor-block" class="w-full py-8 px-2">
             <!-- Editor Form -->
             <div id="editor-form" class="flex flex-col space-y-2 pl-12 pr-2">
                 <!-- Note Title -->
@@ -77,6 +77,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@editorjs/code@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@editorjs/table@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/checklist@latest"></script>
     <script src="./scripts.js"></script>
 </body>
 </html>
