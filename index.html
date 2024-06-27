@@ -7,13 +7,13 @@
     <title>Note</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=Inter:wght@100..900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 fontFamily: {
-                    'sans': ['Bricolage Grotesque', 'sans-serif'],
+                    'sans': ['Inter', 'sans-serif'],
                 }
             }
         }
@@ -22,16 +22,27 @@
         .ce-inline-toolbar, .tc-popover {
             color: black !important;
         }
+        .codex-editor__redactor {
+            padding-bottom: 0 !important;
+        }
+        .ce-block__content, .ce-toolbar__content {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 0 0 1px !important;
+        }
+        .ce-toolbar__plus, .ce-toolbar__settings-btn {
+            color: #605f5f !important;
+        }
     </style>
 </head>
-<body class="bg-neutral-900">
+<body class="bg-neutral-800">
     <!-- App -->
-    <main id="app" class="w-full max-w-screen-lg mx-auto min-h-screen flex">
+    <main id="app" class="w-full max-w-screen-xl mx-auto min-h-screen flex">
         <!-- Sidebar -->
-        <div id="note-sidebar" class="md:flex-none hidden md:flex md:flex-col md:w-56 lg:w-72 bg-neutral-900 py-8 border-r-2 border-neutral-800">
+        <div id="note-sidebar" class="md:flex-none hidden md:flex md:flex-col md:w-72 lg:w-80 py-8 border-r border-neutral-900/50">
             <!-- Sidebar Header -->
-            <div id="note-sidebar-header" class="w-full flex justify-between items-center px-6 pb-2"> 
-                <a href="./" class="font-black text-xl text-neutral-500 hover:text-neutral-50 transition">Note</a>
+            <div id="note-sidebar-header" class="w-full flex justify-between items-center px-5 pb-2"> 
+                <a href="./" class="font-black text-xl text-neutral-50 hover:text-neutral-200 transition">Note</a>
                 <button type="button" id="new-note" onclick="resetNote()" class="bg-transparent text-neutral-500 w-6 h-6 rounded-full hover:text-neutral-50 transition" title="New note">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 stroke-2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -45,27 +56,17 @@
         <!-- Editor Block -->
         <div id="editor-block" class="w-full py-8 px-2">
             <!-- Editor Form -->
-            <div id="editor-form" class="flex flex-col space-y-2 pl-12 pr-2">
+            <div id="editor-form" class="flex flex-col space-y-6 pl-14 pr-2">
                 <!-- Note Title -->
-                <input type="text" id="note-title" placeholder="Your note title" class="w-full pl-1 pr-2 bg-neutral-900 text-neutral-200 outline-none font-bold text-xl" />
-
-                <!-- Note Content -->
-                <div id="editorjs" class="w-full min-h-32 text-neutral-200 py-2 outline-none bg-neutral-900 cursor-text"></div>
-
-                <!-- Note Action Buttons -->
-                <div class="pt-2 pl-1 pr-2 flex items-center space-x-2">
-                    <button type="button" id="save-note-button" onclick="saveNote()" class="h-8 w-20 flex items-center justify-center rounded bg-sky-500 text-white transition text-sm font-semibold outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-neutral-900 hover:ring-2 hover:ring-sky-400 hover:ring-offset-2 hover:ring-offset-neutral-900">
-                        <p>Save</p>
-                    </button>
-                    <button type="button" id="reset-note-button" onclick="resetNote()" class="h-8 w-20 flex items-center justify-center rounded bg-neutral-800 text-white transition text-sm font-semibold outline-none focus:ring-2 focus:ring-neutral-700 focus:ring-offset-2 focus:ring-offset-neutral-900 hover:ring-2 hover:ring-neutral-700 hover:ring-offset-2 hover:ring-offset-neutral-900">
-                        Reset
-                    </button>
-                    <button type="button" id="delete-note-button" onclick="deleteNote()" class="h-8 w-8 flex items-center justify-center rounded bg-red-800 text-white transition text-sm font-semibold outline-none focus:ring-2 focus:ring-red-800 focus:ring-offset-2 focus:ring-offset-neutral-900 hover:ring-2 hover:ring-red-800 hover:ring-offset-2 hover:ring-offset-neutral-900">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 stroke-2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                        </svg>                           
+                <div class="flex items-center justify-between space-x-2">
+                    <input type="text" id="note-title" placeholder="Your note title" class="w-full bg-transparent text-neutral-50 outline-none font-bold text-xl"/>
+                    <button tabindex="-1" type="button" id="save-note-button" onclick="saveNote()" class="px-4 py-1 flex items-center justify-center space-x-2 rounded bg-teal-600 text-white transition text-xs font-semibold outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-neutral-900 hover:ring-2 hover:ring-teal-400 hover:ring-offset-2 hover:ring-offset-neutral-900">
+                        <p>Save</p>                 
                     </button>
                 </div>
+
+                <!-- Note Content -->
+                <div id="editorjs" class="bg-transparent text-neutral-50"></div>
             </div>
         </div>
     </main>
