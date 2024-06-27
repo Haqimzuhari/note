@@ -1,4 +1,4 @@
-// document.addEventListener("DOMContentLoaded", loadNoteList);
+document.addEventListener("DOMContentLoaded", loadNoteList);
 
 let currentNoteId = null;
 const editor = new EditorJS({
