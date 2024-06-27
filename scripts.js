@@ -92,14 +92,6 @@ function loadNoteContent(index) {
 function saveNote() {
     const noteTitle = document.getElementById('note-title').value
     editor.save().then((content) => {
-        content.blocks = content.blocks.map(block => {
-            if (block.data.text) {block.data.text = block.data.text.trim();}
-            if (block.type === 'header' && block.data.text) {block.data.text = block.data.text.trim();}
-            if (block.type === 'list' && block.data.items) {block.data.items = block.data.items.map(item => item.trim());}
-            if (block.type === 'quote' && block.data.text) {block.data.text = block.data.text.trim();}
-            if (block.type === 'code' && block.data.code) {block.data.code = block.data.code.trim();}
-            return block;
-        });
         const noteDate = getCurrentDateFormatted()
         if (content.blocks.length > 0 && noteTitle != '') {
             let stored_noteTitle = JSON.parse(localStorage.getItem('stored_noteTitle')) || [];
