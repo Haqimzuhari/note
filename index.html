@@ -30,6 +30,7 @@
             color: #605f5f !important;
         }
     </style>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-neutral-800">
     <!-- App -->
@@ -50,7 +51,7 @@
             <div id="note-list-block" class="pt-2 px-2 flex flex-col-reverse"></div>
         </div>
         <!-- Editor Block -->
-        <div id="editor-block" class="w-full py-8 px-2">
+        <div id="editor-block" class="w-full py-8 px-2" x-data>
             <!-- Editor Form -->
             <div id="editor-form" class="flex flex-col space-y-6 pl-14 pr-2">
                 <!-- Note Title -->
@@ -66,6 +67,9 @@
             </div>
         </div>
     </main>
+    <!-- Popup alert -->
+    <div id="alert-message-container" class="fixed right-5 bottom-5 z-20 flex flex-col space-y-2"></div>
+      
     <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@editorjs/marker@latest"></script>
